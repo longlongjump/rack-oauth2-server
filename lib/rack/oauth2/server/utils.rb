@@ -22,6 +22,12 @@ module Rack
           (Array === scope ? scope.join(" ") : scope || "").split(/\s+/).compact.uniq.sort
         end
 
+        # Returns true if redirect_uri from request and uri from database matches
+        # or false if it does not
+        def client_uri_ends_with_redirect_uri?(redirect_uri, client_uri)
+           URI.parse(redirect_uri).host.end_with?(URI.parse(client_uri).host)
+        end
+
       end
 
     end
