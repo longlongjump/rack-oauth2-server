@@ -152,7 +152,7 @@ module Rack
       #     user if user && user.authenticated?(password)
       #   end
       Options = Struct.new(:access_token_path, :authenticator, :authorization_types,
-        :authorize_path, :database, :host, :param_authentication, :path, :realm, 
+        :authorize_path, :database, :host, :param_authentication, :path, :realm,
         :expires_in,:logger)
 
       # Global options. This is what we set during configuration (e.g. Rails'
@@ -276,6 +276,7 @@ module Rack
             # 3.  Obtaining End-User Authorization
             begin
               redirect_uri = Utils.parse_redirect_uri(request.GET["redirect_uri"])
+              @subdomain_redirect_uri = redirect_uri
             rescue InvalidRequestError=>error
               logger.error "RO2S: Authorization request with invalid redirect_uri: #{request.GET["redirect_uri"]} #{error.message}" if logger
               return bad_request(error.message)
@@ -284,7 +285,8 @@ module Rack
             # 3. Obtaining End-User Authorization
             response_type = request.GET["response_type"].to_s # Need this first, for error handling
             client = get_client(request, :dont_authenticate => true)
-            raise RedirectUriMismatchError unless client.redirect_uri.nil? || client.redirect_uri == redirect_uri.to_s
+
+            raise RedirectUriMismatchError unless client.redirect_uri.nil? || Utils.client_uri_ends_with_redirect_uri?(redirect_uri.to_s, client.redirect_uri)
             raise UnsupportedResponseTypeError unless options.authorization_types.include?(response_type)
             requested_scope = Utils.normalize_scope(request.GET["scope"])
             allowed_scope = client.scope
@@ -315,7 +317,8 @@ module Rack
       def authorization_response(response, logger)
         status, headers, body = response
         auth_request = self.class.get_auth_request(headers["oauth.authorization"])
-        redirect_uri = URI.parse(auth_request.redirect_uri)
+        redirect_uri = @subdomain_redirect_uri
+
         if status == 403
           auth_request.deny!
         else
@@ -360,9 +363,7 @@ module Rack
             # 4.1.1.  Authorization Code
             grant = AccessGrant.from_code(request.POST["code"])
             raise InvalidGrantError, "Wrong client" unless grant && client.id == grant.client_id
-            unless client.redirect_uri.nil? || client.redirect_uri.to_s.empty?
-              raise InvalidGrantError, "Wrong redirect URI" unless grant.redirect_uri == Utils.parse_redirect_uri(request.POST["redirect_uri"]).to_s
-            end
+            raise InvalidGrantError, "Wrong redirect URI" if @subdomain_redirect_uri.nil? || @subdomain_redirect_uri.to_s.empty?
             raise InvalidGrantError, "This access grant expired" if grant.expires_at && grant.expires_at <= Time.now.to_i
             access_token = grant.authorize!(options.expires_in)
           when "password"
@@ -389,7 +390,7 @@ module Rack
         rescue OAuthError=>error
           logger.error "RO2S: Access token request error #{error.code}: #{error.message}" if logger
           return unauthorized(request, error) if InvalidClientError === error && request.basic?
-          return [400, { "Content-Type"=>"application/json", "Cache-Control"=>"no-store" }, 
+          return [400, { "Content-Type"=>"application/json", "Cache-Control"=>"no-store" },
                   [{ :error=>error.code, :error_description=>error.message }.to_json]]
         end
       end
