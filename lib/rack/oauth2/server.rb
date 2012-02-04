@@ -153,7 +153,7 @@ module Rack
       #   end
       Options = Struct.new(:access_token_path, :authenticator, :authorization_types,
         :authorize_path, :database, :host, :param_authentication, :path, :realm,
-        :expires_in,:logger)
+        :expires_in, :logger, :bypass_domain_validation)
 
       # Global options. This is what we set during configuration (e.g. Rails'
       # config/application), and options all handlers inherit by default.
@@ -171,6 +171,7 @@ module Rack
         @options.authorize_path ||= "/oauth/authorize"
         @options.authorization_types ||=  %w{code token}
         @options.param_authentication ||= false
+        @options.bypass_domain_validation ||= false
       end
 
       # Options specific for this handle. @see Options
@@ -286,7 +287,10 @@ module Rack
             response_type = request.GET["response_type"].to_s # Need this first, for error handling
             client = get_client(request, :dont_authenticate => true)
 
-            raise RedirectUriMismatchError unless client.redirect_uri.nil? || Utils.client_uri_ends_with_redirect_uri?(redirect_uri.to_s, client.redirect_uri)
+            unless options.bypass_domain_validation
+              raise RedirectUriMismatchError unless client.redirect_uri.nil? || Utils.client_uri_ends_with_redirect_uri?(redirect_uri.to_s, client.redirect_uri)
+            end
+
             raise UnsupportedResponseTypeError unless options.authorization_types.include?(response_type)
             requested_scope = Utils.normalize_scope(request.GET["scope"])
             allowed_scope = client.scope
