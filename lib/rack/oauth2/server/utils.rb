@@ -28,8 +28,10 @@ module Rack
            URI.parse(redirect_uri).host.end_with?(URI.parse(client_uri).host)
         end
 
+        def custom_params(p)
+          return URI.parse(p) rescue nil
+        end
       end
-
     end
   end
 end

@@ -299,7 +299,11 @@ module Rack
             # handle the rest.
             auth_request = AuthRequest.create(client, requested_scope, redirect_uri.to_s, response_type, state)
             uri = URI.parse(request.url)
-            uri.query = "authorization=#{auth_request.id.to_s}"
+            uri.query = "authorization=#{auth_request.id.to_s}&email=#{Utils.custom_params(request.GET["email"])}" +
+                        "&nickname=#{Utils.custom_params(request.GET["nickname"])}" +
+                        "&dob=#{Utils.custom_params(request.GET["dob"])}" +
+                        "&gender=#{Utils.custom_params(request.GET["gender"])}" +
+                        "&country=#{Utils.custom_params(request.GET["country"])}"
             return redirect_to(uri, 303)
           end
         rescue OAuthError=>error
