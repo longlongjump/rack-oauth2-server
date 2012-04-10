@@ -34,7 +34,7 @@ module Rack
     #
     #     . . .
     #
-    #   protected 
+    #   protected
     #     def current_user
     #       @current_user ||= User.find(oauth.identity) if oauth.authenticated?
     #     end
@@ -65,7 +65,7 @@ module Rack
 
       # Filter methods available in controller.
       module Filters
-        
+
         # Adds before filter to require authentication on all the listed paths.
         # Use the :scope option if client must also have access to that scope.
         #

@@ -22,7 +22,7 @@ module Rack
         def secure_random
           OpenSSL::Random.random_bytes(32).unpack("H*")[0]
         end
-        
+
         # @private
         def create_indexes(&block)
           if block
@@ -35,7 +35,7 @@ module Rack
             @create_indexes = nil
           end
         end
- 
+
         # A Mongo::DB object.
         def database
           @database ||= Server.options.database
@@ -44,7 +44,7 @@ module Rack
           @database
         end
       end
- 
+
     end
   end
 end
