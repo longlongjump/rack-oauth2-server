@@ -302,10 +302,7 @@ module Rack
 
             # Pass prefill values
             if request.GET["prefill"]
-              prefill = ""
-              request.GET["prefill"].each do |key, value|
-                prefill << "prefill[" + key.to_s + "]=" + value.to_s + "&"
-              end
+              prefill = request.GET["prefill"].map{|k,v| "prefill[#{k}]=#{v}"}.join('&')
               uri.query = "authorization=#{auth_request.id.to_s}&" + prefill
             else
               uri.query = "authorization=#{auth_request.id.to_s}"
