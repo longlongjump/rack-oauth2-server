@@ -304,7 +304,7 @@ module Rack
           end
         rescue OAuthError=>error
           logger.error "RO2S: Authorization request error #{error.code}: #{error.message}" if logger
-          params = { :error=>error.code, :error_description=>error.message, :state=>state }
+          params = { "error" => error.code, "error_description" => error.message, "state" => state }
           if response_type == "token"
             redirect_uri.fragment = Rack::Utils.build_query(params)
           else # response type is code, or invalid
@@ -332,20 +332,20 @@ module Rack
         if auth_request.response_type == "code"
           if auth_request.grant_code
             logger.info "RO2S: Client #{auth_request.client_id} granted access code #{auth_request.grant_code}" if logger
-            params = { :code=>auth_request.grant_code, :scope=>auth_request.scope.join(" "), :state=>auth_request.state }
+            params = { "code" => auth_request.grant_code, "scope" => auth_request.scope.join(" "), "state" => auth_request.state }
           else
             logger.info "RO2S: Client #{auth_request.client_id} denied authorization" if logger
-            params = { :error=>:access_denied, :state=>auth_request.state }
+            params = { "error" => :access_denied, "state" => auth_request.state }
           end
           params = Rack::Utils.parse_query(redirect_uri.query).merge(params)
           redirect_uri.query = Rack::Utils.build_query(params)
         else # response type if token
           if auth_request.access_token
             logger.info "RO2S: Client #{auth_request.client_id} granted access token #{auth_request.access_token}" if logger
-            params = { :access_token=>auth_request.access_token, :scope=>auth_request.scope.join(" "), :state=>auth_request.state }
+            params = { "access_token" => auth_request.access_token, "scope" => auth_request.scope.join(" "), "state" => auth_request.state }
           else
             logger.info "RO2S: Client #{auth_request.client_id} denied authorization" if logger
-            params = { :error=>:access_denied, :state=>auth_request.state }
+            params = { "error" => :access_denied, "state" => auth_request.state }
           end
           redirect_uri.fragment = Rack::Utils.build_query(params)
         end
