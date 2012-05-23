@@ -277,7 +277,7 @@ module Rack
             # 3.  Obtaining End-User Authorization
             begin
               redirect_uri = Utils.parse_redirect_uri(request.GET["redirect_uri"])
-              @subdomain_redirect_uri = redirect_uri
+              auth_request = self.class.get_auth_request(request.GET["authorization"]) rescue nil
             rescue InvalidRequestError=>error
               logger.error "RO2S: Authorization request with invalid redirect_uri: #{request.GET["redirect_uri"]} #{error.message}" if logger
               return bad_request(error.message)
@@ -329,7 +329,7 @@ module Rack
       def authorization_response(response, logger)
         status, headers, body = response
         auth_request = self.class.get_auth_request(headers["oauth.authorization"])
-        redirect_uri = @subdomain_redirect_uri
+        redirect_uri = URI.parse(auth_request.redirect_uri)
 
         if status == 403
           auth_request.deny!
@@ -375,7 +375,7 @@ module Rack
             # 4.1.1.  Authorization Code
             grant = AccessGrant.from_code(request.POST["code"])
             raise InvalidGrantError, "Wrong client" unless grant && client.id == grant.client_id
-            raise InvalidGrantError, "Wrong redirect URI" if @subdomain_redirect_uri.nil? || @subdomain_redirect_uri.to_s.empty?
+            #raise InvalidGrantError, "Wrong redirect URI" if @subdomain_redirect_uri.nil? || @subdomain_redirect_uri.to_s.empty?
             raise InvalidGrantError, "This access grant expired" if grant.expires_at && grant.expires_at <= Time.now.to_i
             access_token = grant.authorize!(options.expires_in)
           when "password"

@@ -19,7 +19,7 @@ module Rack
           # and any state value to pass back in that redirect.
           def create(client, scope, redirect_uri, response_type, state)
             scope = Utils.normalize_scope(scope) & client.scope # Only allowed scope
-            fields = { :client_id=>client.id, :scope=>scope, :redirect_uri=>client.redirect_uri || redirect_uri,
+            fields = { :client_id=>client.id, :scope=>scope, :redirect_uri => redirect_uri,
                        :response_type=>response_type, :state=>state,
                        :grant_code=>nil, :authorized_at=>nil,
                        :created_at=>Time.now.to_i, :revoked=>nil }
