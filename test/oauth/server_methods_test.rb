@@ -172,7 +172,7 @@ class ServerTest < Test::Unit::TestCase
       setup { @code = Server.access_grant("Batman", client.id) }
 
       should "pick client scope" do
-        assert_equal %w{oauth-admin read write}, Server::AccessGrant.from_code(@code).scope
+        assert_equal %w{read write}, Server::AccessGrant.from_code(@code).scope
       end
     end
 
@@ -237,7 +237,7 @@ class ServerTest < Test::Unit::TestCase
       setup { @token = Server.token_for("Batman", client.id) }
 
       should "pick client scope" do
-        assert_equal %w{oauth-admin read write}, Server::AccessToken.from_token(@token).scope
+        assert_equal %w{read write}, Server::AccessToken.from_token(@token).scope
       end
     end
   end

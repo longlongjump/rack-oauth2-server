@@ -55,14 +55,12 @@ when "register"
 when "setup"
 
   fail "No database. Use the --db option to tell us which database to use" unless Server.options.database
-  puts "Where would you mount the Web console? This is a URL that must end with /admin,"
-  puts "for example, http://example.com/oauth/admin"
+  puts "Where would you mount the Web console?"
   print ": "
   uri = URI.parse($stdin.gets)
   begin
     uri.normalize!
     fail "No an HTTP/S URL" unless uri.absolute? && %{http https}.include?(uri.scheme)
-    fail "Path must end with /admin" unless uri.path[/\/admin$/]
     client = Server.register(:display_name=>"OAuth Console", :link=>uri.to_s, :image_url=>"#{uri.to_s}/images/oauth-2.png",
                              :redirect_uri=>uri.to_s, :scope=>"oauth-admin")
   rescue
@@ -73,43 +71,6 @@ when "setup"
 
 Next Steps
 ==========
-
-Make sure you ONLY authorize administrators to use the oauth-admin scope.
-For example:
-
-  before_filter do
-    # Only admins allowed to authorize the scope oauth-admin
-    head oauth.deny! if oauth.scope.include?("oauth-admin") && !current_user.admin?
-  end
-
-Rails 2.x, add the following to config/environment.rb:
-
-  config.after_initialize do
-    config.middleware.use Rack::OAuth2::Server::Admin.mount "#{uri.path}"
-    Rack::OAuth2::Server::Admin.set :client_id, "#{client.id}"
-    Rack::OAuth2::Server::Admin.set :client_secret, "#{client.secret}"
-  end
-
-Rails 3.x, add the following to config/application.rb:
-
-  config.after_initialize do
-    Rack::OAuth2::Server::Admin.set :client_id, "#{client.id}"
-    Rack::OAuth2::Server::Admin.set :client_secret, "#{client.secret}"
-  end
-
-And add the follownig to config/routes.rb:
-
-  mount Rack::OAuth2::Server::Admin=>"/oauth/admin"
-
-Sinatra, Padrino and other Rack applications, mount the console:
-
-  Rack::Builder.new do
-    map("#{uri.path}") { run Rack::OAuth2::Server::Admin }
-    map("/") { run MyApp }
-  end
-  Rack::OAuth2::Server::Admin.set :client_id, "#{client.id}"
-  Rack::OAuth2::Server::Admin.set :client_secret, "#{client.secret}"
-
 The console will authorize access by redirecting to
   https://#{uri.host}/oauth/authorize
 
@@ -130,22 +91,6 @@ when "practice"
 
   fail "No database. Use the --db option to tell us which database to use" unless Server.options.database
   port ||= 8080
-  admin_url = "http://localhost:#{port}/oauth/admin"
-  unless client = Server::Client.lookup(admin_url)
-    client = Server.register(:display_name=>"Practice OAuth Console", :image_url=>"#{admin_url}/images/oauth-2.png",
-                             :link=>admin_url, :redirect_uri=>admin_url, :scope=>"oauth-admin")
-  end
-  Server::Admin.configure do |config|
-    logger = Logger.new(STDOUT)
-    logger.level = Logger::DEBUG
-    config.set :client_id, client.id
-    config.set :client_secret, client.secret
-    config.set :scope, "nobody sudo"
-    config.set :logger, logger
-    config.set :logging, true
-    config.set :dump_errors, true
-    config.oauth.logger = logger
-  end
 
   Server::Practice.configure do |config|
     logger = Logger.new(STDOUT)
@@ -159,7 +104,6 @@ when "practice"
   print "\nFiring up the practice server.\nFor instructions, go to http://localhost:#{port}/\n\n\n"
   Thin::Server.new "127.0.0.1", port  do
     map("/") { run Server::Practice.new }
-    map("/oauth/admin") { run Server::Admin.new }
   end.start
 
 when "migrate"

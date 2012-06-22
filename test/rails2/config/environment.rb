@@ -18,5 +18,4 @@ Rails::Initializer.run do |config|
       "Batman" if username == "cowbell" && password == "more"
     end
   end
-  config.middleware.use Rack::OAuth2::Server::Admin.mount
 end

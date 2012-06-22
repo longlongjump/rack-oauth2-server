@@ -1,5 +1,5 @@
-require "rack/oauth2/server/admin"
-
+require 'sinatra'
+require 'rack/oauth2/sinatra'
 module Rack
   module OAuth2
     class Server
@@ -25,8 +25,7 @@ module Rack
       <dt>Resource requiring authorization and scope "sudo":</dt>
       <dd>http://#{request.host}:#{request.port}/make</dd>
     </dl>
-    <p>The scope can be "nobody", "sudo", "oauth-admin" or combination of the three.</p>
-    <p>You can manage client applications and tokens from the <a href="/oauth/admin">OAuth console</a>.</p>
+    <p>The scope can be "nobody", "sudo" or combination of the three.</p>
   </body>
 </html>
           HTML
